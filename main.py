@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
 import pyperclip
@@ -56,19 +57,28 @@ def main():
         description="A simple CLI tool to store terminal commands."
     )
 
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
         "-a", "--add", nargs=2, metavar=("tag", "command"), help="Add a new command"
     )
     group.add_argument(
-        "-c", "--copy",nargs="?", const="__NO_TAG__", metavar="tag", help="Copy a command to clipboard"
+        "-c",
+        "--copy",
+        nargs="?",
+        const="__NO_TAG__",
+        metavar="tag",
+        help="Copy a command to clipboard",
     )
     group.add_argument(
         "-l", "--list", action="store_true", help="List all tags and commands"
     )
 
     args = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
 
     if args.add:
         tag, command = args.add
