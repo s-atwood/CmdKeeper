@@ -4,7 +4,6 @@ import os
 import subprocess
 import sys
 import tempfile
-from pathlib import Path
 
 import pyperclip
 
@@ -12,15 +11,25 @@ STORAGE_FILE = "commands.json"
 commands = {}
 
 
-if not os.path.exists(STORAGE_FILE):
-    with open(STORAGE_FILE, "w") as f:
-        json.dump({}, f, indent=4)
-else:
-    with open(STORAGE_FILE, "r") as f:
-        commands = json.load(f)
+try:
+    if not os.path.exists(STORAGE_FILE):
+        with open(STORAGE_FILE, "w") as f:
+            json.dump({}, f, indent=4)
+    else:
+        with open(STORAGE_FILE, "r") as f:
+            commands = json.load(f)
+
+except json.JSONDecodeError:
+    print(f"Error loading commands from {STORAGE_FILE}. Please check the file content.")
+    sys.exit(1)
+
+except FileNotFoundError:
+    print(f"Error loading commands from {STORAGE_FILE}. File not found.")
+    sys.exit(1)
 
 
 def add_command(tag, command):
+
     if tag in commands:
         commands[tag].append(command)
     else:
@@ -30,6 +39,7 @@ def add_command(tag, command):
 
 
 def validate_tag(action, tag):
+
     if tag is None:
         print(f"Select a tag to {action} from:")
         tags = commands.keys()
@@ -49,8 +59,9 @@ def validate_tag(action, tag):
 
 
 def copy_command(action, tag):
+
     selection, tag = validate_tag(action, tag)
-    
+
     if selection is not None:
         pyperclip.copy(commands[tag][selection - 1])
         print(f"Command copied to clipboard: {commands[tag][selection - 1]}")
@@ -79,6 +90,7 @@ def edit_command(action, tag):
 
 
 def list_commands():
+
     for t, c in commands.items():
         print(f"{t.upper()}:")
         for cmd in c:
@@ -86,8 +98,9 @@ def list_commands():
 
 
 def main():
+
     parser = argparse.ArgumentParser(
-        description="A simple CLI tool to store terminal commands.",
+        description="CmdKeeper: A terminal command manager.",
         formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=40),
     )
 
