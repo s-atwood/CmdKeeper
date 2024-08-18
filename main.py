@@ -28,14 +28,17 @@ except FileNotFoundError:
     sys.exit(1)
 
 
-def add_command(tag, command):
+def add_command(tag, command, description):
+
+    command_data = {"command": command, "description": description}
 
     if tag in commands:
-        commands[tag].append(command)
+        commands[tag].append(command_data)
     else:
-        commands[tag] = [command]
+        commands[tag] = [command_data]
     with open(STORAGE_FILE, "w") as f:
         json.dump(commands, f, indent=4)
+        print(f"Command '{command}' added to tag '{tag}'.")
 
 
 def validate_tag(action, tag):
@@ -107,7 +110,7 @@ def main():
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
-        "-a", "--add", nargs=2, metavar=("[tag]", "[command]"), help="Add a new command"
+        "-a", "--add", nargs=3, metavar=("[tag]", "[command]", "[desc]"), help="Add a new command"
     )
     group.add_argument(
         "-c",
@@ -138,8 +141,8 @@ def main():
         sys.exit(1)
 
     if args.add:
-        tag, command = args.add
-        add_command(tag, command)
+        tag, command, desc = args.add
+        add_command(tag, command, desc)
     elif args.copy is not None:
         if args.copy == "__NO_TAG__":
             copy_command("copy", None)
