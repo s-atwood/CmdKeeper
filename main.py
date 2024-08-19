@@ -66,8 +66,8 @@ def copy_command(action, tag):
     selection, tag = validate_tag(action, tag)
 
     if selection is not None:
-        pyperclip.copy(commands[tag][selection - 1])
-        print(f"Command copied to clipboard: {commands[tag][selection - 1]}")
+        pyperclip.copy(commands[tag][selection - 1]["command"])
+        print(f"Command '{commands[tag][selection - 1]['command']}' copied to clipboard.")
 
 
 def edit_command(action, tag):
@@ -90,6 +90,9 @@ def edit_command(action, tag):
             json.dump(commands, f, indent=4)
 
         print(f"Command updated for tag '{tag}'.")
+
+def search_commands():
+    pass
 
 
 def list_commands():
