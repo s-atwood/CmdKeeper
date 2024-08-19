@@ -67,7 +67,9 @@ def copy_command(action, tag):
 
     if selection is not None:
         pyperclip.copy(commands[tag][selection - 1]["command"])
-        print(f"Command '{commands[tag][selection - 1]['command']}' copied to clipboard.")
+        print(
+            f"Command '{commands[tag][selection - 1]['command']}' copied to clipboard."
+        )
 
 
 def edit_command(action, tag):
@@ -91,16 +93,18 @@ def edit_command(action, tag):
 
         print(f"Command updated for tag '{tag}'.")
 
+
 def search_commands():
     pass
 
 
 def list_commands():
 
-    for t, c in commands.items():
-        print(f"{t.upper()}:")
-        for cmd in c:
-            print(f"{cmd}")
+    for tag, cmd in commands.items():
+        print(f"{tag}:")
+        for c in cmd:
+            print(f"  - {c['command']}")
+            print(f"    Desc: {c['description']}\n")
 
 
 def main():
@@ -113,7 +117,11 @@ def main():
     group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
-        "-a", "--add", nargs=3, metavar=("[tag]", "[command]", "[desc]"), help="Add a new command"
+        "-a",
+        "--add",
+        nargs=3,
+        metavar=("[tag]", "[command]", "[desc]"),
+        help="Add a new command",
     )
     group.add_argument(
         "-c",
