@@ -7,25 +7,36 @@ import tempfile
 
 import pyperclip
 
-STORAGE_FILE = "commands.json"
+from config_handler import get_json_file_path, read_ini_file
+
 commands = {}
 
+ini_file_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "app_config.ini"
+)
+config = read_ini_file(ini_file_path)
+STORAGE_FILE = get_json_file_path(config)
+valid_storage_file = STORAGE_FILE is not None
 
-try:
-    if not os.path.exists(STORAGE_FILE):
-        with open(STORAGE_FILE, "w") as f:
-            json.dump({}, f, indent=4)
-    else:
+
+if valid_storage_file:
+    try:
+        if not os.path.exists(STORAGE_FILE):
+            with open(STORAGE_FILE, "w") as f:
+                json.dump({}, f, indent=4)
+
         with open(STORAGE_FILE, "r") as f:
             commands = json.load(f)
 
-except json.JSONDecodeError:
-    print(f"Error loading commands from {STORAGE_FILE}. Please check the file content.")
-    sys.exit(1)
+    except json.JSONDecodeError:
+        print(
+            f"Error loading commands from {STORAGE_FILE}. Please check the file content."
+        )
+        sys.exit(1)
 
-except FileNotFoundError:
-    print(f"Error loading commands from {STORAGE_FILE}. File not found.")
-    sys.exit(1)
+    except FileNotFoundError:
+        print(f"Error loading commands from {STORAGE_FILE}. File not found.")
+        sys.exit(1)
 
 
 def add_command(tag, command, description):
@@ -36,9 +47,11 @@ def add_command(tag, command, description):
         commands[tag].append(command_data)
     else:
         commands[tag] = [command_data]
-    with open(STORAGE_FILE, "w") as f:
-        json.dump(commands, f, indent=4)
-        print(f"Command '{command}' added to tag '{tag}'.")
+
+    if valid_storage_file:
+        with open(STORAGE_FILE, "w") as f:
+            json.dump(commands, f, indent=4)
+            print(f"Command '{command}' added to tag '{tag}'.")
 
 
 def validate_tag(action, tag):
@@ -56,8 +69,8 @@ def validate_tag(action, tag):
         return None, None
     else:
         for i in range(len(commands[tag])):
-            print(f"{i+1}: {commands[tag][i]}")
-        selection = int(input(f"Which command to {action}?: "))
+            print(f"{i+1}: {commands[tag][i]['command']}")
+        selection = int(input(f"Select number to {action} command: "))
         return selection, tag
 
 
@@ -78,7 +91,7 @@ def edit_command(action, tag):
 
     if selection is not None:
         with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
-            temp_file.write(commands[tag][selection - 1])
+            temp_file.write(commands[tag][selection - 1]["command"])
             temp_filepath = temp_file.name
 
         subprocess.run(["nvim", temp_filepath])
@@ -86,7 +99,7 @@ def edit_command(action, tag):
         with open(temp_filepath, "r") as temp_file:
             updated_command = temp_file.read().strip()
 
-        commands[tag][selection - 1] = updated_command
+        commands[tag][selection - 1]["command"] = updated_command
 
         with open(STORAGE_FILE, "w") as f:
             json.dump(commands, f, indent=4)
@@ -94,8 +107,8 @@ def edit_command(action, tag):
         print(f"Command updated for tag '{tag}'.")
 
 
-def search_commands():
-    pass
+def search_commands(search_terms):
+    print(search_terms)
 
 
 def list_commands():
@@ -120,7 +133,7 @@ def main():
         "-a",
         "--add",
         nargs=3,
-        metavar=("[tag]", "[command]", "[desc]"),
+        metavar=("[TAG]", "[COMMAND]", "[DESC]"),
         help="Add a new command",
     )
     group.add_argument(
@@ -128,7 +141,7 @@ def main():
         "--copy",
         nargs="?",
         const="__NO_TAG__",
-        metavar="tag",
+        metavar="TAG",
         help="Copy a command to clipboard",
     )
 
@@ -137,10 +150,17 @@ def main():
         "--edit",
         nargs="?",
         const="__NO_TAG__",
-        metavar="edit",
+        metavar="EDIT",
         help="Edit a command",
     )
 
+    group.add_argument(
+        "-s",
+        "--search",
+        nargs="*",
+        metavar="SEARCH_TERM",
+        help="Search terms to find commands",
+    )
     group.add_argument(
         "-l", "--list", action="store_true", help="List all tags and commands"
     )
@@ -164,6 +184,9 @@ def main():
             edit_command("edit", None)
         else:
             edit_command("edit", args.edit)
+    elif args.search:
+        search_terms = args.search
+        search_commands(search_terms)
     elif args.list:
         list_commands()
     else:
