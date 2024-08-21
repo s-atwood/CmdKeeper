@@ -11,32 +11,28 @@ from config_handler import get_json_file_path, read_ini_file
 
 commands = {}
 
-ini_file_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "app_config.ini"
-)
-config = read_ini_file(ini_file_path)
-STORAGE_FILE = get_json_file_path(config)
-valid_storage_file = STORAGE_FILE is not None
+home_dir = os.path.expanduser("~")
+storage_file = os.path.join(home_dir, ".CmdKeeper", "commands.json")
+os.makedirs(os.path.dirname(storage_file), exist_ok=True)
 
+try:
+    if not os.path.exists(storage_file):
+        with open(storage_file, "w") as f:
+            json.dump({}, f, indent=4)
 
-if valid_storage_file:
-    try:
-        if not os.path.exists(STORAGE_FILE):
-            with open(STORAGE_FILE, "w") as f:
-                json.dump({}, f, indent=4)
+    with open(storage_file, "r") as f:
+        commands = json.load(f)
 
-        with open(STORAGE_FILE, "r") as f:
-            commands = json.load(f)
+except json.JSONDecodeError:
+    print(
+        f"Error loading commands from {storage_file}. Please check the file content."
+    )
+    sys.exit(1)
 
-    except json.JSONDecodeError:
-        print(
-            f"Error loading commands from {STORAGE_FILE}. Please check the file content."
-        )
-        sys.exit(1)
+except FileNotFoundError:
+    print(f"Error loading commands from {storage_file}. File not found.")
+    sys.exit(1)
 
-    except FileNotFoundError:
-        print(f"Error loading commands from {STORAGE_FILE}. File not found.")
-        sys.exit(1)
 
 
 def add_command(tag, command, description):
@@ -48,8 +44,8 @@ def add_command(tag, command, description):
     else:
         commands[tag] = [command_data]
 
-    if valid_storage_file:
-        with open(STORAGE_FILE, "w") as f:
+    if storage_file is not None:
+        with open(storage_file, "w") as f:
             json.dump(commands, f, indent=4)
             print(f"Command '{command}' added to tag '{tag}'.")
 
@@ -101,8 +97,9 @@ def edit_command(action, tag):
 
         commands[tag][selection - 1]["command"] = updated_command
 
-        with open(STORAGE_FILE, "w") as f:
-            json.dump(commands, f, indent=4)
+        if storage_file is not None:
+            with open(storage_file, "w") as f:
+                json.dump(commands, f, indent=4)
 
         print(f"Command updated for tag '{tag}'.")
 
@@ -113,11 +110,15 @@ def search_commands(search_terms):
 
 def list_commands():
 
-    for tag, cmd in commands.items():
-        print(f"{tag}:")
-        for c in cmd:
-            print(f"  - {c['command']}")
-            print(f"    Desc: {c['description']}\n")
+    if len(commands) == 0:
+        print("No commands found.")
+        return
+    else:
+        for tag, cmd in commands.items():
+            print(f"{tag}:")
+            for c in cmd:
+                print(f"  - {c['command']}")
+                print(f"    Desc: {c['description']}\n")
 
 
 def main():
