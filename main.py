@@ -24,15 +24,12 @@ try:
         commands = json.load(f)
 
 except json.JSONDecodeError:
-    print(
-        f"Error loading commands from {storage_file}. Please check the file content."
-    )
+    print(f"Error loading commands from {storage_file}. Please check the file content.")
     sys.exit(1)
 
 except FileNotFoundError:
     print(f"Error loading commands from {storage_file}. File not found.")
     sys.exit(1)
-
 
 
 def add_command(tag, command, description):
@@ -105,7 +102,18 @@ def edit_command(action, tag):
 
 
 def search_commands(search_terms):
-    print(search_terms)
+    index = 1
+    for  tag, cmd in commands.items():
+        for c in cmd:
+            if any(term in tag for term in search_terms) or  any(term in c["command"] for term in search_terms) or any(term in c["description"] for term in search_terms):
+                print(f" {index}: {c['command']}")
+                print(f"    Desc: {c['description']}\n")
+                index += 1
+                    
+
+   # selection = int(input("Select number to copy command: "))
+   # tag = list(commands.keys())[selection - 1]
+   # copy_command("copy", tag)
 
 
 def list_commands():
@@ -168,9 +176,9 @@ def main():
 
     args = parser.parse_args()
 
-    if len(sys.argv) == 1:
-        parser.print_help()
-        sys.exit(1)
+    # if len(sys.argv) == 1:
+    #     parser.print_help()
+    #     sys.exit(1)
 
     if args.add:
         tag, command, desc = args.add
@@ -185,9 +193,12 @@ def main():
             edit_command("edit", None)
         else:
             edit_command("edit", args.edit)
-    elif args.search:
-        search_terms = args.search
-        search_commands(search_terms)
+    elif args.search is not None:
+        if len(args.search) > 0:
+            search_terms = args.search
+            search_commands(search_terms)
+        else:
+            print("No search terms provided.")
     elif args.list:
         list_commands()
     else:
